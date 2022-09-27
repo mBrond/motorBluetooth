@@ -80,23 +80,14 @@
         app:layout_constraintTop_toBottomOf="@+id/cim"
         app:layout_constraintVertical_bias="0.055" />
 
-    <ImageView
-        android:id="@+id/iconBluetooth"
-        android:layout_width="38dp"
-        android:layout_height="32dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toStartOf="@+id/switch1"
-        app:layout_constraintTop_toTopOf="@+id/switch1"
-        app:srcCompat="@android:drawable/stat_sys_data_bluetooth" />
-
-    <Switch
-        android:id="@+id/switch1"
+    <Button
+        android:id="@+id/conexao"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="148dp"
-        android:text="Bluetooth"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="128dp"
+        android:text="Conectar"
+        app:layout_constraintStart_toStartOf="@+id/bai"
         app:layout_constraintTop_toBottomOf="@+id/bai" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
