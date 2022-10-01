@@ -1,37 +1,81 @@
-/*
- * Tutorial to connect HC05 Bluetooth Module to Arduino board
- * by Droiduino
- * 
- * ver 1.0
- *retirado de "https://droiduino-cc.medium.com/a-simple-way-to-give-your-arduino-project-a-bluetooth-capability-eb6400c95bae"
- *Não sei bem oq to fazendo - Miguel
- */
 
-const int ledPin = 13; // Built in LED in Arduino board
-String msg;
-
+#include <SoftwareSerial.h>
+SoftwareSerial bluetooth(2, 3);
+ 
+#define IN1 = 4;
+#define IN2 = 5;
+#define IN3 = 6;
+#define IN4 = 7;
+#define buzinaPin = 8 ;
+char comando;
+ 
 void setup() {
-  // Initialization
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
-  Serial.begin(9600); // Communication rate of the Bluetooth Module
+  //Define os pinos como saida
+  bluetooth.begin(9600);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
 }
-
+ 
 void loop() {
-  // To read message received from other Bluetooth Device
-  if (Serial.available() > 0){ // Check if there is data coming
-    msg = Serial.read(); // Read the message
+  while (bluetooth.available()) {
+    comando = bluetooth.read();
+    if (comando == 'F') {
+      frente();
+    }
+    else if (comando == 'B') {
+      tras();
+    }
+    else if (comando == 'L') {
+      esquerda();
+    } 
+    else if (comando == 'R') {
+      direita();
+    } else {
+      parado();
+    }
   }
+}
+ 
+void frente() {
+  
+ digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+ 
+void tras() {
 
-  /*
-   * Transmitting a message is as simple as printing to
-   * Serial port
-   */
-   Serial.println("This is Bluetooth message");
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
 
-   // Visual indicator that the board is transmitting
-   digitalWrite(ledPin, HIGH);
-   delay(1000);
-   digitalWrite(ledPin, LOW);
-   delay(1000);
+}
+ 
+void esquerda() {
+ digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+ 
+void direita() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+void parado() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4,LOW);
+}
+void buzina({
+
+}
+}
 }
