@@ -1,12 +1,13 @@
 
 #include <SoftwareSerial.h>
-SoftwareSerial bluetooth(2, 3);
+SoftwareSerial bluetooth(0, 1);
  
-#define IN1 = 4;
-#define IN2 = 5;
-#define IN3 = 6;
-#define IN4 = 7;
-#define buzinaPin = 8 ;
+int IN1 = 6;
+int IN2 = 7;
+int IN3 = 8;
+int IN4 = 9;
+int BEEP = 10;
+
 char comando;
  
 void setup() {
@@ -15,7 +16,7 @@ void setup() {
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+  pinMode(IN4, OUTPUT); 
 }
  
 void loop() {
@@ -32,6 +33,9 @@ void loop() {
     } 
     else if (comando == 'R') {
       direita();
+    }
+    else if (comando == 'V'){
+      buzina(); 
     } else {
       parado();
     }
@@ -74,8 +78,12 @@ void parado() {
   digitalWrite(IN3, LOW);
   digitalWrite(IN4,LOW);
 }
-void buzina({
+void buzina(){
+    for (int i=0;i<500;i++){
 
-}
-}
+      digitalWrite(BEEP, HIGH);
+      delayMicroseconds(1000);
+      digitalWrite(BEEP, LOW);
+      delayMicroseconds(1000); 
+  }
 }
