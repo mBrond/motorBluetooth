@@ -14,7 +14,10 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private Button botao_cima, botao_baixo, botao_esquerda, botao_direita, botao_conexao;
-    public BluetoothAdapter bluetoothAdaptador = null; //objeto adaptador bluetooth
+    BluetoothAdapter bluetoothAdaptador = null; //objeto adaptador bluetooth
+    BluetoothDevice meuDevice = null;
+    BluetoothSocket meuSocket = null;
+
 
     private static final int SOLICITADOR_BLUETOOTH = 1;
     private static final int SOLICITA_CONEXAO = 2;
@@ -22,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     boolean conexao = false;
 
     private static String MAC = null;
+
+    UUID MEU_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,19 +49,24 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(ativarBlue, SOLICITADOR_BLUETOOTH);
         }
 
-        botao_conexao.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        botao_conexao.setOnClickListener((v)) {
 
-                if(conexao ){
+                if(conexao){
                     //desconectar
+                    try{
+                        meuSocket.close();
+                        conexao=false;
+                        botao_conexao.setText("Conectar");
+                        Toast.makeText(getApplicationContext(), "Bluetooth Desconectado", Toast.LENGTH_LONG).show();
+                    } catch(IOException erro){
+                        Toast.makeText(getApplicationContext(), "Ocorreu um erro:"+ erro, Toast.LENGTH_LONG).show();
+                    }
                 }else{
                     //conectar
                     Intent abreLista = new Intent(MainActivity.this, listaDispositivos.class);
                     startActivityForResult(abreLista, SOLICITA_CONEXAO);
                 }
-            }
-        });
+        };
 
     }
 
@@ -76,8 +86,24 @@ public class MainActivity extends AppCompatActivity {
                 if(resultCode == Activity.RESULT_OK){
                     MAC = data.getExtras().getString(listaDispositivos.ENDERECO_MAC);
                     //Toast.makeText(getApplicationContext(), "MAC FINAL: "+MAC, Toast.LENGTH_LONG).show();
+                    meuDevice = bluetoothAdaptador.getRemoteDevice(MAC);
+
+                    try{
+                        meuSocket = meuDevice.createRfcommSocketToServiceRecord(MEU_UUID);
+                        meuSocket.connect();
+
+                        conexao = true;
+
+                        botao_conexao.setText("Desconectar");
+
+                        Toast.makeText(getApplicationContext(), "Você foi conectado com: "+MAC, Toast.LENGTH_LONG).show();
+
+                    } catch (IOException erro){
+                        conexao = false;
+                        Toast.makeText(getApplicationContext(), "Ocorreu um erro:"+ erro, Toast.LENGTH_LONG).show();
+                    }
                 } else {
-                    //Toast.makeText(getApplicationContext(), "Falha ao obter endereço MAC", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Falha ao obter endereço MAC", Toast.LENGTH_LONG).show();
                 }
 
         }
