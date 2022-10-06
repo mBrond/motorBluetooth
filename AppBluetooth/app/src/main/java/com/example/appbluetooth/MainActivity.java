@@ -1,47 +1,51 @@
 package com.example.appbluetooth;
 
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+@RequiresApi(api = Build.VERSION_CODES.M)
 public class MainActivity extends AppCompatActivity {
-    private Button botao_cima, botao_baixo, botao_esquerda, botao_direita, botao_conexao;
+    private Button botao_cima, botao_baixo, botao_esquerda, botao_direita, botao_conexao, botao_buzina;
     BluetoothAdapter bluetoothAdaptador = null; //objeto adaptador bluetooth
     BluetoothDevice meuDevice = null;
     BluetoothSocket meuSocket = null;
 
+    BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
+    BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
 
-    private static final int SOLICITADOR_BLUETOOTH = 1;
+    OutputStream mmOutStream;
+
+    private static final int SOLICITADOR_BLUETOOTH = 0;
     private static final int SOLICITA_CONEXAO = 2;
-
 
     boolean conexao = false;
 
     private static String MAC = null;
 
-    Thread ConnectedThread;
+    ConnectedThread connectedThread;
 
     UUID MEU_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,15 +53,26 @@ public class MainActivity extends AppCompatActivity {
 
         botao_cima = findViewById(R.id.cim);
         botao_baixo = findViewById(R.id.bai);
-        botao_esquerda = findViewById(R.id.esq);
+        botao_esquerda = findViewById(R.id.buz);
         botao_direita = findViewById(R.id.dir);
         botao_conexao = findViewById(R.id.conexao);
+        botao_buzina = findViewById(R.id.buz);
 
-        bluetoothAdaptador = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdaptador == null) { //confere se o dispositivo tem bluetooth
+        if (bluetoothAdapter == null) {
             Toast.makeText(getApplicationContext(), "Sem módulo bluetooth disponível", Toast.LENGTH_LONG).show();
-        } else if (!bluetoothAdaptador.isEnabled()) { //se tem bluetooth, ativa se não está ligado
+
+        } else if (!bluetoothAdapter.isEnabled()) {
             Intent ativarBlue = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
             startActivityForResult(ativarBlue, SOLICITADOR_BLUETOOTH);
         }
 
@@ -81,33 +96,107 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-        @Override
-        protected void onActivityResult( int requestCode, int resultCode, Intent data){
-            super.onActivityResult(requestCode, resultCode, data);
-            switch (requestCode) {
-                case SOLICITADOR_BLUETOOTH:
-                    if (resultCode == Activity.RESULT_OK) {
-                        Toast.makeText(getApplicationContext(), "Bluetooth ativado", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Bluetooth NÃO ativado, encerrando aplicativo", Toast.LENGTH_LONG).show();
-                        finish();
-                    }
-                    break;
-                case SOLICITA_CONEXAO:
-                    if (resultCode == Activity.RESULT_OK) {
-                        MAC = data.getExtras().getString(listaDispositivos.ENDERECO_MAC);
-                        //Toast.makeText(getApplicationContext(), "MAC FINAL: "+MAC, Toast.LENGTH_LONG).show();
-                        meuDevice = bluetoothAdaptador.getRemoteDevice(MAC);
+        botao_cima.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-                        try {
-                            meuSocket = meuDevice.createRfcommSocketToServiceRecord(MEU_UUID);
+                if (conexao){
+                    connectedThread.enviar("F");
+
+                } else{
+                    Toast.makeText(getApplicationContext(), "Bluetooth não está conectado", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        botao_baixo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (conexao){
+                    connectedThread.enviar("B");
+
+                } else{
+                    Toast.makeText(getApplicationContext(), "Bluetooth não está conectado", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        botao_esquerda.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (conexao){
+                    connectedThread.enviar("L");
+
+                } else{
+                    Toast.makeText(getApplicationContext(), "Bluetooth não está conectado", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        botao_direita.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (conexao){
+                    connectedThread.enviar("R");
+
+                } else{
+                    Toast.makeText(getApplicationContext(), "Bluetooth não está conectado", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        botao_buzina.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (conexao){
+                    connectedThread.enviar("V");
+
+                } else{
+                    Toast.makeText(getApplicationContext(), "Bluetooth não está conectado", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case SOLICITADOR_BLUETOOTH:
+                if (resultCode == Activity.RESULT_OK) {
+                    Toast.makeText(getApplicationContext(), "Bluetooth ativado", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Bluetooth NÃO ativado, encerrando aplicativo", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+            case SOLICITA_CONEXAO:
+                if (resultCode == Activity.RESULT_OK) {
+                    MAC = data.getExtras().getString(listaDispositivos.ENDERECO_MAC);
+                    //Toast.makeText(getApplicationContext(), "MAC FINAL: "+MAC, Toast.LENGTH_LONG).show();
+                    meuDevice = bluetoothAdapter.getRemoteDevice(MAC);
+
+                    try {
+                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+                        }
+                        meuSocket = meuDevice.createRfcommSocketToServiceRecord(MEU_UUID);
                             meuSocket.connect();
 
                             conexao = true;
 
-                            //connectedThread = new ConnectedThread(meuSocket);
-                            //connectedThread.start();
+                            connectedThread = new ConnectedThread(meuSocket);
+                            connectedThread.start();
 
                             botao_conexao.setText("Desconectar");
 
@@ -126,20 +215,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
         class ConnectedThread extends Thread {
-            private final OutputStream mmOutStream;
+            OutputStream mmOutStream;
+            //BluetoothSocket meuSocket;
             private byte[] mmBuffer; // mmBuffer store for the stream
 
             public ConnectedThread(BluetoothSocket socket) {
-                meuSocket = socket;
-                InputStream tmpIn = null;
+                //meuSocket = socket;
                 OutputStream tmpOut = null;
 
                 // Get the input and output streams; using temp objects because
                 // member streams are final.
-                try {
-                    tmpIn = socket.getInputStream();
-                } catch (IOException e) {
-
                 try {
                     tmpOut = socket.getOutputStream();
                 } catch (IOException i) {
@@ -157,12 +242,11 @@ public class MainActivity extends AppCompatActivity {
 
 
                 } catch (IOException e) {
-                    Toast.makeText(getApplicationContext(), "Error occurred when sending data", Toast.LENGTH_LONG).show();
 
                 }
             }
-                }
-        }
+            }
+
         //}
 
 
